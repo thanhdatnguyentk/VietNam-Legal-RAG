@@ -1,0 +1,94 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vietnam-legal-rag"
+version = "0.1.0"
+description = "Retrieval-Augmented Generation system for Vietnamese legal documents, multi-domain."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Vietnam Legal RAG contributors" }]
+keywords = ["rag", "legal", "vietnamese", "llm", "langchain"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Natural Language :: Vietnamese",
+]
+
+dependencies = [
+    # Core orchestration
+    "langchain>=0.2.0",
+    "langchain-core>=0.2.0",
+    "langchain-community>=0.2.0",
+    "langchain-chroma>=0.1.0",
+    # Vector store
+    "chromadb>=0.5.0",
+    # Embeddings (Vietnamese)
+    "sentence-transformers>=2.7.0",
+    # LLM providers (open at least one)
+    "openai>=1.30.0",
+    "anthropic>=0.30.0",
+    # Scraping
+    "httpx>=0.27.0",
+    "selectolax>=0.3.0",
+    "beautifulsoup4>=4.12.0",
+    # Config & types
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "python-dotenv>=1.0.0",
+    # CLI
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+    # Utils
+    "tqdm>=4.66.0",
+    "tenacity>=8.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+    "types-requests",
+]
+
+[project.scripts]
+vietnam-legal-rag-scrape = "vietnam_legal_rag.scripts.scrape:main"
+vietnam-legal-rag-ingest = "vietnam_legal_rag.scripts.ingest:main"
+vietnam-legal-rag-build-index = "vietnam_legal_rag.scripts.build_index:main"
+vietnam-legal-rag-query = "vietnam_legal_rag.scripts.query:main"
+vietnam-legal-rag-eval = "vietnam_legal_rag.scripts.eval:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"vietnam_legal_rag" = ["py.typed"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra -q"
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+ignore_missing_imports = true

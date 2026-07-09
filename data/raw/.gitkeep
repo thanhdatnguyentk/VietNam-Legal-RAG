@@ -1,0 +1,2 @@
+# Place scraped legal documents here (TXT or JSON, one per file).
+# These are ignored by git; rerun `python scripts/scrape.py --all` to regenerate.

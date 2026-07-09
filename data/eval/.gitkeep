@@ -1,0 +1,2 @@
+# Evaluation sets: questions + ground-truth answers for measuring retrieval / answer quality.
+# Format: JSONL with fields {id, question, expected_articles, expected_answer}.
