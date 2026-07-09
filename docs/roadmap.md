@@ -3,17 +3,22 @@
 Repo hiện ở giai đoạn **Skeleton + tài liệu** (v0.1.0-alpha). Các phase tiếp theo
 được ưu tiên như sau.
 
-## Phase 2 — Ingestion thật (ưu tiên cao)
+## Phase 2 — Ingestion thật (ưu tiên cao) ✅ DONE
 
 **Mục tiêu**: từ 1 văn bản luật thô → file JSONL chunks chất lượng cao.
 
-- [ ] Implement `TxtDocumentLoader.load()` (đọc `.txt` + `.meta.json`).
-- [ ] Implement `RecursiveVietnameseChunker.split()` với separators theo cấu trúc:
-      `["\nĐiều ", "\nKhoản ", "\nĐiểm ", "\n\n", "\n", " "]`.
-- [ ] Thêm unit test: 1 file TXT → đúng số chunk, mỗi chunk có metadata hợp lệ.
-- [ ] Commit **1 file văn bản luật mẫu** (vd. Luật Giao thông đường bộ 2008) vào
-      `data/raw/giao_thong/` để chạy pipeline ngay (sẽ commit trong phase này, vì
-      cần có input cụ thể để test — ngoại lệ so với nguyên tắc không commit raw data).
+- [x] Implement `TxtDocumentLoader.load()` (đọc `.txt` + `.meta.json`, map `title` → `document_title`, `url` → `source_url`, fallback domain từ tên thư mục hoặc `"unknown"`).
+- [x] Implement `RecursiveVietnameseChunker.split()` — splitter 3 cấp (Điều → Khoản → Điểm) với `langchain-text-splitters` làm fallback cho phần quá dài.
+- [x] Thêm unit test: 22 tests mới (regex, loader, chunker, pipeline end-to-end), 36 tests tổng cộng đều pass.
+- [x] Thêm `src/vietnam_legal_rag/ingestion/_regex.py` với các compiled regex (hỗ trợ cả chữ Việt `đ`).
+- [x] Thêm fixture `tests/fixtures/sample_law.{txt,meta.json}` mô phỏng Luật Giao thông đường bộ 2008.
+- [x] Update `scripts/ingest.py` với `--dry-run --stats -v`.
+- [x] Update `docs/data-model.md` với các metadata computed (`split_level`, `chunk_index`, `total_chunks`) và ghi chú về `chunk_id` không ổn định giữa các run.
+
+**Decisions đã chốt ở phase 2**:
+- Chunk_id = `uuid4().hex` (không ổn định; idempotency cho phase 3 dùng hash).
+- Nếu Khoản > chunk_size mà không có Điểm: emit 1 oversized chunk thay vì char-split (giữ semantic boundary).
+- Test file thật chưa commit — đợi user cung cấp sau (do robots.txt của TVPL cấm `ai-input`).
 
 ## Phase 3 — Embedding + Index
 

@@ -31,7 +31,8 @@ trường metadata (trừ `body_text`) để loader có thể khôi phục `Docu
 
 Một chunk là một `langchain_core.documents.Document` với:
 
-- `page_content`: văn bản đã được tách (theo Điều/Khoản/Điểm).
+- `page_content`: văn bản đã được tách (theo Điều/Khoản/Điểm). **Bắt đầu bằng header
+  citation** do chunker render — vd `23/2008/QH12 | Điều 5 — Quy định về nhiều khoản\n\nKhoản 1\n...`.
 - `metadata` (dict): các trường sau là **bắt buộc** để citation chính xác:
 
 | Khoá                | Kiểu    | Bắt buộc | Mô tả                                        |
@@ -41,10 +42,26 @@ Một chunk là một `langchain_core.documents.Document` với:
 | `domain`            | `str`   | ✓        | Tên miền                                     |
 | `article`           | `str`   | ✓        | Số Điều (vd. `"15"`)                         |
 | `article_title`     | `str`   |          | Tên Điều                                     |
-| `clause`            | `str`   |          | Số Khoản                                     |
-| `point`             | `str`   |          | Số Điểm                                      |
-| `chunk_id`          | `str`   | ✓        | UUID v4 hoặc hash ổn định                    |
+| `clause`            | `str`   |          | Số Khoản (chuỗi rỗng khi split theo Điều)    |
+| `point`             | `str`   |          | Chữ cái Điểm (chuỗi rỗng khi không có Điểm) |
+| `chunk_id`          | `str`   | ✓        | UUID4 hex — **không ổn định giữa các run**   |
 | `source_url`        | `str`   | ✓        | URL gốc                                      |
+
+**Metadata bổ sung** (do chunker tính toán, không bắt buộc nhưng rất hữu ích):
+
+| Khoá                | Kiểu    | Mô tả                                                          |
+|---------------------|---------|----------------------------------------------------------------|
+| `split_level`       | `str`   | `"article"` \| `"clause"` \| `"point"` \| `"char"` (fallback)   |
+| `chunk_index`       | `int`   | Vị trí chunk trong document, 0-based                           |
+| `total_chunks`      | `int`   | Tổng số chunk của document                                     |
+| `url` / `title`     | `str`   | Alias của `source_url` / `document_title` từ sidecar (giữ lại để debug) |
+| `issued_date`       | `str`   | ISO 8601 — chỉ có nếu sidecar có                               |
+| `effective_date`    | `str`   | ISO 8601 — chỉ có nếu sidecar có                               |
+
+> **Lưu ý quan trọng về `chunk_id`**: hiện tại là `uuid4().hex` — không ổn định giữa
+> các lần chạy ingestion. Phase 3 (Vector store) sẽ cần chiến lược idempotency; nếu
+> muốn `chunk_id` ổn định, dùng hash(document_number + article + clause + point + text_hash).
+> Đây là trade-off đã chốt ở phase 2.
 
 JSONL output mỗi dòng:
 

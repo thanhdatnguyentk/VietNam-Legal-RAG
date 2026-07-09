@@ -113,19 +113,27 @@ Các biến quan trọng (xem `.env.example` để biết đầy đủ):
 
 ## 6. Quick start
 
-> Hiện tại các script chỉ in help + raise `NotImplementedError` ở phần logic —
-> đây là **skeleton có chủ đích** để bạn đọc qua trước khi triển khai thật.
+> **Phase status:** Skeleton ✅ | Phase 2 (ingestion) ✅ | Phase 3+ (embed/retrieve/generate) ⏳
+>
+> `scripts/ingest.py` đã có implementation thật từ phase 2. Scraper + retrieval
+> + generation vẫn là skeleton (raise `NotImplementedError` khi dùng).
 
 ```bash
 # 6.1 Xem tất cả domain đã đăng ký
 python scripts/scrape.py --help
 
-# 6.2 Dry-run scraper (in URL, không gọi mạng)
-python scripts/scrape.py --all --dry-run
+# 6.2 (Đã có implementation phase 2) Ingest từ raw/ → processed/
+python scripts/ingest.py --all --dry-run  # xem files sẽ xử lý, không ghi
+python scripts/ingest.py --all --stats    # chạy thật + in per-file chunk count
 
-# 6.3 Sau khi scraper thật sẵn sàng ở phase tiếp theo:
-make scrape DOMAIN=giao_thong
-make ingest DOMAIN=giao_thong
+# 6.3 (Đã có fixture test) Chạy nhanh với file luật mẫu trong repo:
+python scripts/ingest.py \
+  --raw-dir tests/fixtures \
+  --out-dir /tmp/processed \
+  --stats
+ls /tmp/processed/
+
+# 6.4 Phase sau (chưa implement, vẫn raise NotImplementedError):
 make index
 make query Q="Điều kiện cấp GPLX hạng B1?"
 make eval
