@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VietLegal RAG — Trợ Lý Pháp Luật AI</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css">
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "@material/web/": "https://esm.run/@material/web/"
+      }
+    }
+  </script>
+  <script type="module">
+    import '@material/web/all.js';
+    import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+  </script>
+</head>
+<body>
+  <div class="app-background"></div>
+  
+  <div class="app-layout">
+    <!-- Top App Bar -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-logo">
+          <md-icon>balance</md-icon>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">VietLegal RAG</div>
+          <div class="brand-subtitle">Trợ Lý Pháp Luật Việt Nam</div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="status-indicator">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-text">Đang kết nối...</span>
+        </div>
+        <md-icon-button id="theme-toggle" aria-label="Toggle dark mode">
+          <md-icon>dark_mode</md-icon>
+        </md-icon-button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+      <!-- Welcome State -->
+      <section class="welcome-container" id="welcome">
+        <div class="welcome-hero">
+          <div class="sparkle-icon">
+            <md-icon>auto_awesome</md-icon>
+          </div>
+          <h1 class="welcome-title">Xin chào, tôi có thể giúp gì?</h1>
+          <p class="welcome-subtitle">
+            Hệ thống tra cứu và hỏi đáp pháp luật Việt Nam sử dụng AI.<br>
+            Hỗ trợ Graph RAG + Hybrid Retrieval với độ chính xác cao.
+          </p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <md-elevation></md-elevation>
+            <md-icon class="stat-icon">database</md-icon>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-vectors">35,879</span>
+              <span class="stat-label">Vectors</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <md-elevation></md-elevation>
+            <md-icon class="stat-icon">description</md-icon>
+            <div class="stat-info">
+              <span class="stat-value">5,001</span>
+              <span class="stat-label">Văn bản</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <md-elevation></md-elevation>
+            <md-icon class="stat-icon">category</md-icon>
+            <div class="stat-info">
+              <span class="stat-value">12</span>
+              <span class="stat-label">Lĩnh vực</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <md-elevation></md-elevation>
+            <md-icon class="stat-icon">target</md-icon>
+            <div class="stat-info">
+              <span class="stat-value">Neo4j</span>
+              <span class="stat-label">Graph RAG</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="suggestions-wrapper">
+          <div class="suggestions-title">Gợi ý truy vấn</div>
+          <div class="suggestions-grid">
+            <md-elevated-button class="suggestion-btn" data-query="Mức phạt vượt đèn đỏ đối với xe máy là bao nhiêu?">
+              <md-icon slot="icon">traffic</md-icon>
+              Phạt vượt đèn đỏ xe máy
+            </md-elevated-button>
+            <md-elevated-button class="suggestion-btn" data-query="Thủ tục đăng ký kinh doanh cho doanh nghiệp mới">
+              <md-icon slot="icon">business_center</md-icon>
+              Thủ tục ĐKKD mới
+            </md-elevated-button>
+            <md-elevated-button class="suggestion-btn" data-query="Quyền của người lao động khi bị sa thải trái pháp luật">
+              <md-icon slot="icon">gavel</md-icon>
+              Bị sa thải trái luật
+            </md-elevated-button>
+            <md-elevated-button class="suggestion-btn" data-query="Điều kiện để được hưởng bảo hiểm xã hội một lần">
+              <md-icon slot="icon">health_and_safety</md-icon>
+              Điều kiện BHXH một lần
+            </md-elevated-button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat Results Area -->
+      <section class="chat-area hidden" id="chat-area"></section>
+    </main>
+
+    <!-- Input Area -->
+    <div class="input-wrapper">
+      <div class="input-container">
+        <md-elevation></md-elevation>
+        
+        <div class="input-mode-selector">
+          <md-filter-chip id="mode-ask" selected label="Hỏi AI" elevated></md-filter-chip>
+          <md-filter-chip id="mode-search" label="Tra cứu" elevated></md-filter-chip>
+        </div>
+        
+        <div class="input-box">
+          <md-icon class="input-icon">search</md-icon>
+          <textarea id="query-input" rows="1" placeholder="Nhập câu hỏi pháp luật hoặc từ khóa tìm kiếm..."></textarea>
+          <md-icon-button id="send-button" disabled>
+            <md-icon>send</md-icon>
+          </md-icon-button>
+        </div>
+        
+        <div class="input-footer">
+          VietLegal AI có thể mắc lỗi. Vui lòng kiểm tra lại các văn bản gốc để xác minh.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

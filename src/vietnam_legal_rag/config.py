@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     # ── LLM provider keys ──────────────────────────────────────────────────
     openai_api_key: str | None = Field(default=None)
     anthropic_api_key: str | None = Field(default=None)
+    gemini_api_key: str | None = Field(default=None)
 
     # ── LLM ────────────────────────────────────────────────────────────────
     llm_provider: str = Field(default="openai")
@@ -34,9 +35,9 @@ class Settings(BaseSettings):
     llm_max_tokens: int = Field(default=1024, gt=0)
 
     # ── Embeddings ─────────────────────────────────────────────────────────
-    embedding_model: str = Field(default="keepitreal/vietnamese-sbert")
-    embedding_device: str = Field(default="cpu")
-    embedding_batch_size: int = Field(default=32, gt=0)
+    embedding_model: str = Field(default="BAAI/bge-m3")
+    embedding_device: str = Field(default="auto")
+    embedding_batch_size: int = Field(default=64, gt=0)
 
     # ── Vector store ───────────────────────────────────────────────────────
     chroma_persist_dir: str = Field(default="data/index")

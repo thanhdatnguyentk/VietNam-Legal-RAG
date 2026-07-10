@@ -15,6 +15,7 @@ Usage examples
 
 from __future__ import annotations
 
+import logging
 import sys
 from pathlib import Path
 
@@ -24,6 +25,7 @@ from rich.console import Console
 from vietnam_legal_rag.config import get_settings
 from vietnam_legal_rag.domains import DOMAIN_REGISTRY
 from vietnam_legal_rag.paths import RAW_DIR
+from vietnam_legal_rag.scrapers.thuvienphapluat import ThuvienPhapLuatScraper
 
 app = typer.Typer(add_completion=False, help="Scrape Vietnamese legal documents.")
 console = Console()
@@ -56,9 +58,11 @@ def main(
     out_dir: Path = typer.Option(RAW_DIR, "--out-dir", help="Where to write scraped files."),
 ) -> None:
     """Scrape the selected domain(s) and persist raw files."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
+
     settings = get_settings()
     selected = _resolve_targets(domains or [], all_domains)
-    console.print(f"[bold]Vietnam Legal RAG — scraper[/bold]")
+    console.print("[bold]Vietnam Legal RAG — scraper[/bold]")
     console.print(f"Selected domains: {', '.join(selected)}")
     console.print(f"Output dir:        {out_dir}")
     console.print(f"Base URL:          {settings.scraper_base_url}")
@@ -67,17 +71,35 @@ def main(
         for name in selected:
             spec = DOMAIN_REGISTRY[name]
             console.print(f"  - {name} ({len(spec.source_urls)} URLs)")
+            for url in spec.source_urls:
+                console.print(f"    → {url}")
         console.print("[yellow]Dry-run only — no network requests issued.[/yellow]")
         return
 
-    # ── SKELETON ────────────────────────────────────────────────────────────
-    # The real scraper body is intentionally not implemented yet. Wiring plan:
-    #   1. instantiate ThuvienPhapLuatScraper(settings)
-    #   2. for each domain: collect detail URLs from spec.source_urls, then run()
-    #   3. save into out_dir / spec.name
-    raise NotImplementedError(
-        "scrape.py is a skeleton — see docs/roadmap.md for the next phase."
+    # Initialize scraper
+    scraper = ThuvienPhapLuatScraper(
+        base_url=settings.scraper_base_url,
+        user_agent=settings.scraper_user_agent,
+        timeout=settings.scraper_request_timeout,
+        rate_limit_seconds=settings.scraper_rate_limit_seconds,
     )
+
+    total_saved = 0
+    for name in selected:
+        spec = DOMAIN_REGISTRY[name]
+        domain_dir = out_dir / name
+        console.print(f"\n[bold blue]Domain: {spec.display_name}[/bold blue]")
+
+        if not spec.source_urls:
+            console.print(f"  [yellow]No source URLs configured for {name}[/yellow]")
+            continue
+
+        saved = scraper.run(spec.source_urls, domain_dir)
+        total_saved += len(saved)
+        for path in saved:
+            console.print(f"  ✓ {path.name}")
+
+    console.print(f"\n[green]Done. {total_saved} document(s) saved.[/green]")
 
 
 if __name__ == "__main__":

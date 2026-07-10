@@ -52,3 +52,7 @@ data/index/
 # Logs
 *.log
 logs/
+
+# Data and Temp
+data/neo4j/
+scratch/

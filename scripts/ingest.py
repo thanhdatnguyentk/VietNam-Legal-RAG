@@ -8,10 +8,14 @@ Usage examples
 
     # Ingest a single domain
     python scripts/ingest.py giao_thong
+
+    # Use fallback recursive chunker
+    python scripts/ingest.py giao_thong --chunker recursive
 """
 
 from __future__ import annotations
 
+import logging
 import sys
 from pathlib import Path
 
@@ -20,7 +24,10 @@ from rich.console import Console
 
 from vietnam_legal_rag.config import get_settings
 from vietnam_legal_rag.domains import DOMAIN_REGISTRY
-from vietnam_legal_rag.ingestion.chunker import RecursiveVietnameseChunker
+from vietnam_legal_rag.ingestion.chunker import (
+    RecursiveVietnameseChunker,
+    StructuralVietnameseChunker,
+)
 from vietnam_legal_rag.ingestion.loader import TxtDocumentLoader
 from vietnam_legal_rag.ingestion.pipeline import run_ingestion
 from vietnam_legal_rag.paths import PROCESSED_DIR, RAW_DIR
@@ -49,12 +56,19 @@ def main(
     all_domains: bool = typer.Option(False, "--all", help="Ingest every registered domain."),
     raw_dir: Path = typer.Option(RAW_DIR, "--raw-dir"),
     out_dir: Path = typer.Option(PROCESSED_DIR, "--out-dir"),
+    chunker_type: str = typer.Option(
+        "structural",
+        "--chunker",
+        help="Chunking strategy: 'structural' (SOTA) or 'recursive' (fallback).",
+    ),
 ) -> None:
     """Run the ingestion pipeline."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
+
     settings = get_settings()
     selected = _resolve(domains or [], all_domains)
-    console.print(f"[bold]Vietnam Legal RAG — ingest[/bold]")
-    console.print(f"Chunk size:   {settings.chunk_size} (overlap {settings.chunk_overlap})")
+    console.print("[bold]Vietnam Legal RAG — ingest[/bold]")
+    console.print(f"Chunker:      {chunker_type}")
     console.print(f"Raw dir:      {raw_dir}")
     console.print(f"Processed:    {out_dir}")
     if selected:
@@ -63,14 +77,18 @@ def main(
         console.print("Domains:      (auto-detect from raw/ tree)")
 
     loader = TxtDocumentLoader()
-    chunker = RecursiveVietnameseChunker(
-        chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap
-    )
 
-    # The orchestrator is wired but TxtDocumentLoader.load and the chunker
-    # raise NotImplementedError. We surface that here for the developer.
-    run_ingestion(loader, chunker, raw_dir=raw_dir, out_dir=out_dir, domains=selected)
-    console.print("[green]Done.[/green]")
+    if chunker_type == "structural":
+        chunker = StructuralVietnameseChunker(enrich_title=True)
+    else:
+        chunker = RecursiveVietnameseChunker(
+            chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap
+        )
+
+    written = run_ingestion(
+        loader, chunker, raw_dir=raw_dir, out_dir=out_dir, domains=selected
+    )
+    console.print(f"[green]Done. {len(written)} file(s) written.[/green]")
 
 
 if __name__ == "__main__":

@@ -43,9 +43,34 @@ class RAGPipeline:
             parts.append(f"{header}\n{hit.document.page_content.strip()}")
         return "\n\n".join(parts)
 
-    def query(self, question: str) -> RAGAnswer:  # pragma: no cover - skeleton
+    def query(self, question: str, domain: str | None = None) -> RAGAnswer:
         """Run a full RAG query and return the structured :class:`RAGAnswer`."""
-        raise NotImplementedError("RAGPipeline.query is a skeleton.")
+        # 1. Retrieve
+        hits = self.retriever.retrieve(question)
+        if domain:
+             hits = self.retriever.retrieve(question, domain=domain)
+             
+        # 2. Format Context
+        context = self._format_context(hits)
+        
+        # 3. Render User Prompt
+        user_prompt = render_user_prompt(context=context, question=question)
+        
+        # 4. Generate Answer
+        raw_answer = self.llm.generate(SYSTEM_PROMPT, user_prompt)
+        
+        # 5. Extract pseudo-citations
+        citations = []
+        for i, hit in enumerate(hits, start=1):
+            doc_number = hit.document.metadata.get("document_number", "?")
+            citations.append(f"[{i}] {doc_number}")
+            
+        return RAGAnswer(
+            question=question,
+            answer=raw_answer,
+            citations=citations,
+            hits=hits
+        )
 
 
 __all__ = ["RAGAnswer", "RAGPipeline", "Document"]

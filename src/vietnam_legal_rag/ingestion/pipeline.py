@@ -8,6 +8,7 @@ consumes, so the format must stay stable across versions.
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Iterable
 
@@ -17,6 +18,8 @@ from vietnam_legal_rag.config import get_settings
 from vietnam_legal_rag.ingestion.chunker import TextChunker
 from vietnam_legal_rag.ingestion.loader import DocumentLoader
 from vietnam_legal_rag.paths import PROCESSED_DIR, RAW_DIR
+
+logger = logging.getLogger(__name__)
 
 
 def collect_raw_files(raw_dir: Path = RAW_DIR, domains: Iterable[str] | None = None) -> list[Path]:
@@ -43,28 +46,64 @@ def run_ingestion(
 ) -> list[Path]:
     """Load → chunk → write JSONL; return the list of files written.
 
-    SKELETON — wires up the interfaces but does not yet iterate over files.
+    Each raw file produces a corresponding ``.chunks.jsonl`` file in
+    ``out_dir``.  The JSONL format is one JSON object per line with
+    ``text`` and ``metadata`` keys.
     """
     settings = get_settings()
     out_dir.mkdir(parents=True, exist_ok=True)
 
     raw_files = collect_raw_files(raw_dir=raw_dir, domains=domains)
+    if not raw_files:
+        logger.warning("No raw files found in %s (domains=%s)", raw_dir, domains)
+        return []
+
+    logger.info("Found %d raw files to ingest", len(raw_files))
     written: list[Path] = []
+    total_chunks = 0
+
     for raw_file in raw_files:
+        logger.info("Processing: %s", raw_file.name)
+
+        # Load
         docs: list[Document] = loader.load(raw_file)
+        if not docs:
+            logger.warning("Loader returned 0 documents for %s", raw_file)
+            continue
+
+        # Chunk
         chunks: list[Document] = chunker.split(docs)
-        out_path = out_dir / f"{raw_file.stem}.chunks.jsonl"
+        if not chunks:
+            logger.warning("Chunker returned 0 chunks for %s", raw_file)
+            continue
+
+        logger.info("  → %d chunks from %s", len(chunks), raw_file.name)
+        total_chunks += len(chunks)
+
+        # Write JSONL
+        # Preserve domain subfolder structure
+        domain = raw_file.parent.name
+        domain_out = out_dir / domain
+        domain_out.mkdir(parents=True, exist_ok=True)
+
+        out_path = domain_out / f"{raw_file.stem}.chunks.jsonl"
         with out_path.open("w", encoding="utf-8") as fh:
             for chunk in chunks:
-                fh.write(
-                    json.dumps(
-                        {"text": chunk.page_content, "metadata": chunk.metadata},
-                        ensure_ascii=False,
-                    )
-                )
+                record = {
+                    "text": chunk.page_content,
+                    "metadata": chunk.metadata,
+                }
+                fh.write(json.dumps(record, ensure_ascii=False))
                 fh.write("\n")
         written.append(out_path)
-    _ = settings  # silence unused until implementation wires it up
+
+    logger.info(
+        "Ingestion complete: %d files → %d chunks → %d JSONL files",
+        len(raw_files),
+        total_chunks,
+        len(written),
+    )
+    _ = settings  # will be used for configurable chunking strategy
     return written
 
 
