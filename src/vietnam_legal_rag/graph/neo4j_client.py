@@ -7,9 +7,12 @@ from neo4j import GraphDatabase, Driver
 
 logger = logging.getLogger(__name__)
 
+import os
+
 class Neo4jClient:
-    def __init__(self, uri: str = "bolt://localhost:7687", user: str = "neo4j", password: str = "VietLegal123"):
+    def __init__(self, uri: str = None, user: str = "neo4j", password: str = "VietLegal123"):
         self._driver: Optional[Driver] = None
+        uri = uri or os.environ.get("NEO4J_URI", "bolt://localhost:7687")
         try:
             self._driver = GraphDatabase.driver(uri, auth=(user, password))
             self._driver.verify_connectivity()

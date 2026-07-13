@@ -22,13 +22,13 @@ class GraphEnhancedRetriever:
     def retrieve(
         self,
         query: str,
-        k: int = 5,
+        top_k: int = 5,
         domain: str | None = None,
         **kwargs: Any,
     ) -> List[RetrievalHit]:
         """Retrieve hits using base retriever and expand via KG."""
         # 1. Get base hits (Dense + BM25 + Rerank)
-        base_hits = self.base_retriever.retrieve(query, k=k, domain=domain, **kwargs)
+        base_hits = self.base_retriever.retrieve(query, top_k=top_k, domain=domain, **kwargs)
         
         # 2. Extract context from Graph
         expanded_hits = list(base_hits)

@@ -120,7 +120,7 @@ async function handleSend() {
 
   try {
     const endpoint = isAskMode ? '/ask' : '/search';
-    const body = { query, top_k: 5 };
+    const body = isAskMode ? { question: query } : { query: query, top_k: 5 };
 
     const res = await fetch(`${API_BASE}${endpoint}`, {
       method: 'POST',

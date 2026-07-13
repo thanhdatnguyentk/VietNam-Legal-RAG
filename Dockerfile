@@ -15,8 +15,7 @@ COPY src/ src/
 RUN pip install --no-cache-dir -e ".[dev]" && \
     pip install --no-cache-dir uvicorn[standard] fastapi rank_bm25 accelerate
 
-# Copy data and scripts
-COPY data/ data/
+# Copy scripts
 COPY scripts/ scripts/
 
 EXPOSE 8000

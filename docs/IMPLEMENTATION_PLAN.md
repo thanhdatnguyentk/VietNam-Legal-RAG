@@ -274,9 +274,9 @@ QUY TẮC: Mọi khẳng định PHẢI có trích dẫn. Không đủ căn cứ
 
 ### P0 — Hoàn thiện Kiến trúc Hệ thống
 
-1. **Testset LLM-quality** — Sinh 200 câu hỏi tự nhiên thay vì heuristic (Đã có script nhưng cần benchmark lại).
-2. **End-to-end Evaluation** — Đo đạc Faithfulness & Answer Relevance bằng LLM-as-a-Judge.
-3. **Graph Retrieval Tuning** — Tối ưu Cypher query để lọc nhiễu trong quan hệ REFERS_TO.
+1. **[X] Testset LLM-quality** — Sinh 200 câu hỏi tự nhiên thay vì heuristic (`questions.v2.jsonl` đã được tạo).
+2. **[X] End-to-end Evaluation** — Đã viết script `scripts/eval_e2e.py` và `E2EEvaluator` sử dụng LLM-as-a-Judge. Cần cập nhật Gemini API Key hợp lệ để chạy.
+3. **[ ] Graph Retrieval Tuning** — Tối ưu Cypher query để lọc nhiễu trong quan hệ REFERS_TO.
 
 ### P1 — Triển khai Production & Bảo mật
 

@@ -56,3 +56,4 @@ logs/
 # Data and Temp
 data/neo4j/
 scratch/
+data/ollama/

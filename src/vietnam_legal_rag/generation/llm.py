@@ -88,6 +88,18 @@ def build_default_llm() -> LLMClient:
         except ImportError:
             raise ImportError("langchain-google-genai is not installed. Run `pip install langchain-google-genai`")
             
+    elif settings.llm_provider.lower() == "ollama":
+        try:
+            from langchain_ollama import ChatOllama
+            chat_model = ChatOllama(
+                model=settings.llm_model,
+                temperature=settings.llm_temperature,
+                base_url="http://localhost:11434"
+            )
+            return LangchainLLMClient(chat_model)
+        except ImportError:
+            raise ImportError("langchain-ollama is not installed. Run `pip install langchain-ollama`")
+            
     else:
         raise ValueError(f"Unsupported LLM provider: {settings.llm_provider}")
 
